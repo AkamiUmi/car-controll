@@ -1,9 +1,10 @@
 package uz.asbt.service;
 
 import org.springframework.stereotype.Service;
+import uz.asbt.model.Contract;
 import uz.asbt.model.Response;
 import uz.asbt.repository.ContractRepository;
-import uz.asbt.model.ContractModel;
+import uz.asbt.model.ContractDB;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,63 +20,66 @@ public class ContractServiceImpl implements ContractService{
     }
 
     @Override
-    public ContractModel addContract(ContractModel contract) {
+    public ContractDB addContract(ContractDB contract) {
         return contractRepository.save(contract);
     }
 
     @Override
-    public List<ContractModel> getAllContracts() {
+    public List<ContractDB> getAllContracts() {
         return contractRepository.findAll();
     }
 
     @Override
-    public ContractModel getContractById(long id) {
+    public ContractDB getContractById(long id) {
         return contractRepository.getReferenceById(id);
     }
 
     @Override
-    public int compareContractsEntry(List<ContractModel> contracts) {
-        List<String> phones = new ArrayList<>();
-        for (ContractModel contract : contracts) {
-            String phone = contract.getPhone();
-            phones.add(phone);
+    public Long compareContractsEntry(List<Contract> contracts) {
+        List<String> keys = new ArrayList<>();
+        for (Contract contract : contracts) {
+            String key = contract.getPhone() + contract.getPassportSeries() + contract.getPlateNumber();
+            keys.add(key);
         }
-        List<ContractModel> contain = contractRepository.findContractsEntrySize(phones);
-        return contain.size();
+        List<ContractDB> contain = contractRepository.findContractsEntrySize(keys);
+        return (long) contain.size();
     }
 
     @Override
-    public List<ContractModel> uniqueFromDatabase(List<ContractModel> contracts) {
-        List<String> phones = new ArrayList<>();
-        for (ContractModel contract : contracts) {
-            String phone = contract.getPhone();
-            phones.add(phone);
+    public List<ContractDB> uniqueFromDatabase(List<Contract> contracts) {
+        List<String> keys = new ArrayList<>();
+        for (Contract contract : contracts) {
+            String key = contract.getPhone() + contract.getPassportSeries() + contract.getPlateNumber();
+            keys.add(key);
         }
-        List<ContractModel> contain = contractRepository.findContractInDB(phones);
+        List<ContractDB> contain = contractRepository.findContractInDB(keys);
         return contain;
     }
 
-    @Override
+
+/*    @Override
     public Long fullyComparedCount(List<ContractModel> contracts) {
         return contracts
                 .stream()
                 .filter(model -> contractRepository.existsByPhoneAndPassportSeriesAndPlateNumber(model.getPhone(), model.getPassportSeries(), model.getPlateNumber()))
                 .count();
-    }
+    }*/
+
     @Override
-    public List<ContractModel> uniqueFromJson(List<ContractModel> contracts) {
+    public List<Contract> uniqueFromJson(List<Contract> contracts) {
         return contracts
                 .stream()
-                .filter(model -> !contractRepository.existsByPhone(model.getPhone()))
+                .filter(model -> !contractRepository.existsByPhoneAndPassportSeriesAndPlateNumber(model.getPhone(), model.getPassportSeries(), model.getPlateNumber()))
                 .collect(Collectors.toList());
     }
 
     @Override
-    public Response compareData(List<ContractModel> contracts) {
+    public Response compareData(List<Contract> contracts) {
         Response response = new Response();
         response.setContractsInDB(uniqueFromDatabase(contracts));
         response.setContractsInJson(uniqueFromJson(contracts));
-        response.setCount(fullyComparedCount(contracts));
+        response.setCount(compareContractsEntry(contracts));
+
         return response;
     }
 

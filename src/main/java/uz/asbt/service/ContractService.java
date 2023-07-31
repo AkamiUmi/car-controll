@@ -1,17 +1,18 @@
 package uz.asbt.service;
 
-import uz.asbt.model.ContractModel;
+import uz.asbt.model.Contract;
+import uz.asbt.model.ContractDB;
 import uz.asbt.model.Response;
 
 import java.util.List;
 
 public interface ContractService {
-     ContractModel addContract(ContractModel contracts);
-     List<ContractModel> getAllContracts();
-     ContractModel getContractById(long id);
-     int compareContractsEntry(List<ContractModel> contracts);
-     List<ContractModel> uniqueFromJson(List<ContractModel> contracts);
-     Long fullyComparedCount(List<ContractModel> contracts);
-     List<ContractModel> uniqueFromDatabase(List<ContractModel> contracts);
-     Response compareData(List<ContractModel> contracts);
+     ContractDB addContract(ContractDB contracts);
+     List<ContractDB> getAllContracts();
+     ContractDB getContractById(long id);
+     Long compareContractsEntry(List<Contract> contracts);
+     List<Contract> uniqueFromJson(List<Contract> contracts);
+     //Long fullyComparedCount(List<ContractModel> contracts);
+     List<ContractDB> uniqueFromDatabase(List<Contract> contracts);
+     Response compareData(List<Contract> contracts);
 }

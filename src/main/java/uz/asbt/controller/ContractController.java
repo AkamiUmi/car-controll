@@ -3,7 +3,8 @@ package uz.asbt.controller;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import uz.asbt.model.ContractModel;
+import uz.asbt.model.Contract;
+import uz.asbt.model.ContractDB;
 import uz.asbt.model.Response;
 import uz.asbt.service.ContractService;
 
@@ -21,39 +22,39 @@ public class ContractController {
     }
 
     @GetMapping("/list")
-    public List<ContractModel> list() {
+    public List<ContractDB> list() {
         return contractService.getAllContracts();
 
     }
 
     @PostMapping( "/add-contracts")
-    public List<ContractModel> AddContract(@RequestBody List<ContractModel> contracts) {
+    public List<ContractDB> AddContract(@RequestBody List<ContractDB> contracts) {
         log.info("LogInfo: {}", contracts.toString());
-        for (ContractModel contract: contracts) {
+        for (ContractDB contract: contracts) {
             contractService.addContract(contract);
         }
         return contracts;
     }
     @PostMapping("/compare-entry")
-    public ResponseEntity<Integer> compareContractsEntry(@RequestBody List<ContractModel> contracts) {
+    public ResponseEntity<Long> compareContractsEntry(@RequestBody List<Contract> contracts) {
         log.info("LogInfo: {}", contracts.toString());
         return ResponseEntity.ok(contractService.compareContractsEntry(contracts));
     }
 
     @PostMapping("/base-contracts")
-    public ResponseEntity<List<ContractModel>> contractsInBase(@RequestBody List<ContractModel> contracts) {
+    public ResponseEntity<List<ContractDB>> contractsInBase(@RequestBody List<Contract> contracts) {
         log.info("LogInfo: {}", contracts.toString());
         return ResponseEntity.ok(contractService.uniqueFromDatabase(contracts));
     }
 
-    @PostMapping("/json-contracts")
-    public ResponseEntity<List<ContractModel>> uniqueFromJson(@RequestBody List<ContractModel> contracts) {
+/*    @PostMapping("/json-contracts")
+    public ResponseEntity<List<ContractDB>> uniqueFromJson(@RequestBody List<ContractDB> contracts) {
         log.info("LogInfo: {}", contracts.toString());
         return ResponseEntity.ok(contractService.uniqueFromJson(contracts));
-    }
+    }*/
 
     @PostMapping("/compare")
-    public ResponseEntity<Response> compareData(@RequestBody List<ContractModel> contracts) {
+    public ResponseEntity<Response> compareData(@RequestBody List<Contract> contracts) {
         log.info("LogInfo: {}", contracts.toString());
         return ResponseEntity.ok(contractService.compareData(contracts));
     }

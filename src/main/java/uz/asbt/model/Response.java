@@ -7,7 +7,7 @@ import java.util.List;
 @Setter
 
 public class Response {
-    private List<ContractModel> contractsInDB;
-    private List<ContractModel> contractsInJson;
+    private List<ContractDB> contractsInDB;
+    private List<Contract> contractsInJson;
     private Long count;
 }
