@@ -131,6 +131,9 @@ public class ContractServiceImpl implements ContractService{
         dataRowIndex = 1;
         for (ContractDB contractDB : response.getContractsInDB()) {
             HSSFRow responseRow = sheet.getRow(dataRowIndex);
+            if (responseRow == null) {
+                responseRow = sheet.createRow(dataRowIndex);
+            }
             responseRow.createCell(9).setCellValue(contractDB.getId());
             responseRow.createCell(10).setCellValue(contractDB.getPhone());
             responseRow.createCell(11).setCellValue(contractDB.getPassportSeries());
@@ -138,8 +141,6 @@ public class ContractServiceImpl implements ContractService{
             responseRow.createCell(13).setCellValue(contractDB.getDateBegin());
             responseRow.createCell(14).setCellValue(contractDB.getDateEnd());
             dataRowIndex++;
-
-
         }
 
         /*responseRow.createCell(2).setCellValue("Contracts in JSON");
