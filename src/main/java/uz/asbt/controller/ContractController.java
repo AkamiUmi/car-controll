@@ -8,6 +8,7 @@ import uz.asbt.model.ContractDB;
 import uz.asbt.model.Response;
 import uz.asbt.service.ContractService;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 @RestController
@@ -47,16 +48,28 @@ public class ContractController {
         return ResponseEntity.ok(contractService.uniqueFromDatabase(contracts));
     }
 
-/*    @PostMapping("/json-contracts")
-    public ResponseEntity<List<ContractDB>> uniqueFromJson(@RequestBody List<ContractDB> contracts) {
+    @PostMapping("/json-contracts")
+    public ResponseEntity<List<Contract>> uniqueFromJson(@RequestBody List<Contract> contracts) {
         log.info("LogInfo: {}", contracts.toString());
         return ResponseEntity.ok(contractService.uniqueFromJson(contracts));
-    }*/
+    }
+
 
     @PostMapping("/compare")
     public ResponseEntity<Response> compareData(@RequestBody List<Contract> contracts) {
         log.info("LogInfo: {}", contracts.toString());
         return ResponseEntity.ok(contractService.compareData(contracts));
     }
+
+    @PostMapping("excel")
+    public void excel(@RequestBody List<Contract> contracts, HttpServletResponse res) throws Exception{
+        res.setContentType("application/octet-stream");
+        String headerKey = "Content-Disposition";
+        String headerValue = "attachment;filename=contracts.xls";
+        res.setHeader(headerKey, headerValue);
+
+        contractService.excel(res, contracts);
+    }
+
 
 }
