@@ -13,7 +13,6 @@ public interface ContractService {
      ContractDB getContractById(long id);
      Long compareContractsEntry(List<Contract> contracts);
      List<Contract> uniqueFromJson(List<Contract> contracts);
-     //Long fullyComparedCount(List<ContractModel> contracts);
      List<ContractDB> uniqueFromDatabase(List<Contract> contracts);
      Response compareData(List<Contract> contracts) ;
      void excel(HttpServletResponse res, List<Contract> contracts) throws Exception;

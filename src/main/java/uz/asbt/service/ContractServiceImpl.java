@@ -1,24 +1,26 @@
 package uz.asbt.service;
 
+import org.apache.poi.hssf.usermodel.HSSFCell;
 import org.apache.poi.hssf.usermodel.HSSFRow;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.DataFormat;
+import org.apache.poi.ss.util.CellRangeAddress;
 import org.springframework.stereotype.Service;
 import uz.asbt.model.Contract;
+import uz.asbt.model.ContractDB;
 import uz.asbt.model.Response;
 import uz.asbt.repository.ContractRepository;
-import uz.asbt.model.ContractDB;
 
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-public class ContractServiceImpl implements ContractService{
+public class ContractServiceImpl implements ContractService {
 
     private final ContractRepository contractRepository;
 
@@ -58,25 +60,11 @@ public class ContractServiceImpl implements ContractService{
                 .stream()
                 .map(contract -> contract.getPhone() + contract.getPassportSeries() + contract.getPlateNumber())
                 .collect(Collectors.toList());
-        return  contractRepository.findContractInDB(keys);
+        return contractRepository.findContractInDB(keys);
     }
-
-
-/*    @Override
-    public Long fullyComparedCount(List<ContractModel> contracts) {
-        return contracts
-                .stream()
-                .filter(model -> contractRepository.existsByPhoneAndPassportSeriesAndPlateNumber(model.getPhone(), model.getPassportSeries(), model.getPlateNumber()))
-                .count();
-    }*/
 
     @Override
     public List<Contract> uniqueFromJson(List<Contract> contracts) {
-//        var keys = contracts
-//                .stream()
-//                .map(contract -> contract.getPhone() + contract.getPassportSeries() + contract.getPlateNumber())
-//                .collect(Collectors.toList());
-//        return contractRepository.findContractsEntrySize(keys);
         return contracts
                 .stream()
                 .filter(model -> !contractRepository.existsByPhoneAndPassportSeriesAndPlateNumber(model.getPhone(), model.getPassportSeries(), model.getPlateNumber()))
@@ -96,63 +84,83 @@ public class ContractServiceImpl implements ContractService{
     public void excel(HttpServletResponse res, List<Contract> contracts) throws Exception {
         HSSFWorkbook workbook = new HSSFWorkbook();
         HSSFSheet sheet = workbook.createSheet("Contracts Info");
+        short formatDate = workbook.createDataFormat().getFormat("dd.mm.yyyy");
+
+        CellStyle dateStyle = workbook.createCellStyle();
+        dateStyle.setDataFormat(formatDate);
         HSSFRow row = sheet.createRow(0);
+
+        int entryCountRowIndex = 0;
+        HSSFRow entryCountRow = sheet.createRow(entryCountRowIndex);
+        entryCountRow.createCell(0).setCellValue("Entry Count");
+        entryCountRow.createCell(1).setCellValue(compareContractsEntry(contracts));
+
+        int mergedRowIndex = 1;
+        row = sheet.createRow(mergedRowIndex);
         row.createCell(0).setCellValue("ContractsInJson");
-        row.createCell(1).setCellValue("Id");
-        row.createCell(2).setCellValue("Phone");
-        row.createCell(3).setCellValue("Passport Series");
-        row.createCell(4).setCellValue("Plate Number");
-        row.createCell(5).setCellValue("Date Begin");
-        row.createCell(6).setCellValue("Date End");
-        row.createCell(8).setCellValue("ContractDB");
-        row.createCell(9).setCellValue("Id");
-        row.createCell(10).setCellValue("Phone");
-        row.createCell(11).setCellValue("Passport Series");
-        row.createCell(12).setCellValue("Plate Number");
-        row.createCell(13).setCellValue("Date Begin");
-        row.createCell(14).setCellValue("Date End");
-        int dataRowIndex = 1;
+        CellRangeAddress contractsInJsonCellRange = new CellRangeAddress(mergedRowIndex, mergedRowIndex, 0, 5);
+        sheet.addMergedRegion(contractsInJsonCellRange);
 
-        Response response = new Response();
-        response.setContractsInDB(uniqueFromDatabase(contracts));
-        response.setContractsInJson(uniqueFromJson(contracts));
-        response.setCount(compareContractsEntry(contracts));
+        row.createCell(7).setCellValue("ContractDB");
+        CellRangeAddress contractDBCellRange = new CellRangeAddress(mergedRowIndex, mergedRowIndex, 7, 12); // Adjust the column range
+        sheet.addMergedRegion(contractDBCellRange);
 
-        for (Contract contract : response.getContractsInJson()) {
+        int nameRowIndex = 2;
+        HSSFRow nameRow = sheet.createRow(nameRowIndex);
+
+        nameRow.createCell(0).setCellValue("Id");
+        nameRow.createCell(1).setCellValue("Phone");
+        nameRow.createCell(2).setCellValue("Passport Series");
+        nameRow.createCell(3).setCellValue("Plate Number");
+        nameRow.createCell(4).setCellValue("Date Begin");
+        nameRow.createCell(5).setCellValue("Date End");
+
+        nameRow.createCell(7).setCellValue("Id");
+        nameRow.createCell(8).setCellValue("Phone");
+        nameRow.createCell(9).setCellValue("Passport Series");
+        nameRow.createCell(10).setCellValue("Plate Number");
+        nameRow.createCell(11).setCellValue("Date Begin");
+        nameRow.createCell(12).setCellValue("Date End");
+
+        int dataRowIndex = 3;
+        for (Contract contract : uniqueFromJson(contracts)) {
             HSSFRow dataRow = sheet.createRow(dataRowIndex);
-            dataRow.createCell(1).setCellValue(contract.getId());
-            dataRow.createCell(2).setCellValue(contract.getPhone());
-            dataRow.createCell(3).setCellValue(contract.getPassportSeries());
-            dataRow.createCell(4).setCellValue(contract.getPlateNumber());
-            dataRow.createCell(5).setCellValue(contract.getDateBegin());
-            dataRow.createCell(6).setCellValue(contract.getDateEnd());
-            dataRowIndex++;
-        }
-        dataRowIndex = 1;
-        for (ContractDB contractDB : response.getContractsInDB()) {
-            HSSFRow responseRow = sheet.getRow(dataRowIndex);
-            if (responseRow == null) {
-                responseRow = sheet.createRow(dataRowIndex);
-            }
-            responseRow.createCell(9).setCellValue(contractDB.getId());
-            responseRow.createCell(10).setCellValue(contractDB.getPhone());
-            responseRow.createCell(11).setCellValue(contractDB.getPassportSeries());
-            responseRow.createCell(12).setCellValue(contractDB.getPlateNumber());
-            responseRow.createCell(13).setCellValue(contractDB.getDateBegin());
-            responseRow.createCell(14).setCellValue(contractDB.getDateEnd());
+            dataRow.createCell(0).setCellValue(contract.getId());
+            dataRow.createCell(1).setCellValue(contract.getPhone());
+            dataRow.createCell(2).setCellValue(contract.getPassportSeries());
+            dataRow.createCell(3).setCellValue(contract.getPlateNumber());
+            HSSFCell dateBeginCell = dataRow.createCell(4);
+            dateBeginCell.setCellValue(contract.getDateBegin());
+            dateBeginCell.setCellStyle(dateStyle);
+            HSSFCell dateEndCell = dataRow.createCell(5);
+            dateEndCell.setCellValue(contract.getDateEnd());
+            dateEndCell.setCellStyle(dateStyle);
             dataRowIndex++;
         }
 
-        /*responseRow.createCell(2).setCellValue("Contracts in JSON");
-        responseRow.createCell(3).setCellValue(response.getContractsInJson().toString());
-        responseRow.createCell(4).setCellValue("Number of Contracts");
-        responseRow.createCell(5).setCellValue(response.getCount());*/
+        dataRowIndex = 3;
+        for (ContractDB contractDB : uniqueFromDatabase(contracts)) {
+            HSSFRow dataRow = sheet.getRow(dataRowIndex);
+            if (dataRow == null) {
+                dataRow = sheet.createRow(dataRowIndex);
+            }
+            dataRow.createCell(7).setCellValue(contractDB.getId());
+            dataRow.createCell(8).setCellValue(contractDB.getPhone());
+            dataRow.createCell(9).setCellValue(contractDB.getPassportSeries());
+            dataRow.createCell(10).setCellValue(contractDB.getPlateNumber());
+            HSSFCell dateBeginCellDB = dataRow.createCell(11);
+            dateBeginCellDB.setCellValue(contractDB.getDateBegin());
+            dateBeginCellDB.setCellStyle(dateStyle);
+            HSSFCell dateEndCellDB = dataRow.createCell(12);
+            dateEndCellDB.setCellValue(contractDB.getDateEnd());
+            dateEndCellDB.setCellStyle(dateStyle);
+            dataRowIndex++;
+        }
 
         ServletOutputStream ops = res.getOutputStream();
         workbook.write(ops);
         workbook.close();
         ops.close();
     }
-
 
 }
