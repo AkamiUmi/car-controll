@@ -3,6 +3,7 @@ package uz.asbt.model;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 import java.time.LocalDate;
 @Getter
@@ -21,4 +22,15 @@ public class Contract {
 
     @JsonFormat(pattern="dd.MM.yyyy")
     private LocalDate dateEnd;
+    @Override
+    public String toString() {
+        return "Contract{" +
+                "id='" + id + '\'' +
+                ", phone='" + phone + '\'' +
+                ", plateNumber='" + plateNumber + '\'' +
+                ", passportSeries='" + passportSeries + '\'' +
+                ", dateBegin=" + dateBegin +
+                ", dateEnd=" + dateEnd +
+                '}';
+    }
 }
