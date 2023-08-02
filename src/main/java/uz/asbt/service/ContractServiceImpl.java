@@ -5,7 +5,6 @@ import org.apache.poi.hssf.usermodel.HSSFRow;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.CellStyle;
-import org.apache.poi.ss.usermodel.DataFormat;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.springframework.stereotype.Service;
 import uz.asbt.model.Contract;
@@ -84,47 +83,40 @@ public class ContractServiceImpl implements ContractService {
     public void excel(HttpServletResponse res, List<Contract> contracts) throws Exception {
         HSSFWorkbook workbook = new HSSFWorkbook();
         HSSFSheet sheet = workbook.createSheet("Contracts Info");
-        short formatDate = workbook.createDataFormat().getFormat("dd.mm.yyyy");
+        short formatDate = workbook.createDataFormat().getFormat("dd.MM.yyyy");
 
         CellStyle dateStyle = workbook.createCellStyle();
         dateStyle.setDataFormat(formatDate);
-        HSSFRow row = sheet.createRow(0);
 
-        int entryCountRowIndex = 0;
-        HSSFRow entryCountRow = sheet.createRow(entryCountRowIndex);
+        int dataRowIndex = 0;
+
+        HSSFRow entryCountRow = sheet.createRow(dataRowIndex++);
         entryCountRow.createCell(0).setCellValue("Entry Count");
         entryCountRow.createCell(1).setCellValue(compareContractsEntry(contracts));
 
-        int mergedRowIndex = 1;
-        row = sheet.createRow(mergedRowIndex);
-        row.createCell(0).setCellValue("ContractsInJson");
-        CellRangeAddress contractsInJsonCellRange = new CellRangeAddress(mergedRowIndex, mergedRowIndex, 0, 5);
-        sheet.addMergedRegion(contractsInJsonCellRange);
+        HSSFRow contractsInJsonRow = sheet.createRow(dataRowIndex++);
+        contractsInJsonRow.createCell(0).setCellValue("ContractsInJson");
+        sheet.addMergedRegion(new CellRangeAddress(1, 1, 0, 5));
 
-        row.createCell(7).setCellValue("ContractDB");
-        CellRangeAddress contractDBCellRange = new CellRangeAddress(mergedRowIndex, mergedRowIndex, 7, 12); // Adjust the column range
-        sheet.addMergedRegion(contractDBCellRange);
+        HSSFRow contractDBRow = sheet.createRow(dataRowIndex++);
+        contractDBRow.createCell(7).setCellValue("ContractDB");
+        sheet.addMergedRegion(new CellRangeAddress(2, 2, 7, 12));
 
-        int nameRowIndex = 2;
-        HSSFRow nameRow = sheet.createRow(nameRowIndex);
 
-        nameRow.createCell(0).setCellValue("Id");
-        nameRow.createCell(1).setCellValue("Phone");
-        nameRow.createCell(2).setCellValue("Passport Series");
-        nameRow.createCell(3).setCellValue("Plate Number");
-        nameRow.createCell(4).setCellValue("Date Begin");
-        nameRow.createCell(5).setCellValue("Date End");
+        String[] headers = {"Id", "Phone", "Passport Series", "Plate Number", "Date Begin", "Date End"};
+        HSSFRow nameRow = sheet.createRow(dataRowIndex++);
+        for (int i = 0; i < headers.length; i++) {
+            nameRow.createCell(i).setCellValue(headers[i]);
+        }
+        for (int i = 7; i < 13; i++) {
+            nameRow.createCell(i).setCellValue(headers[i - 7]);
+        }
 
-        nameRow.createCell(7).setCellValue("Id");
-        nameRow.createCell(8).setCellValue("Phone");
-        nameRow.createCell(9).setCellValue("Passport Series");
-        nameRow.createCell(10).setCellValue("Plate Number");
-        nameRow.createCell(11).setCellValue("Date Begin");
-        nameRow.createCell(12).setCellValue("Date End");
+        List<Contract> uniqueContractsJson = uniqueFromJson(contracts);
+        List<ContractDB> uniqueContractsDB = uniqueFromDatabase(contracts);
 
-        int dataRowIndex = 3;
-        for (Contract contract : uniqueFromJson(contracts)) {
-            HSSFRow dataRow = sheet.createRow(dataRowIndex);
+        for (Contract contract : uniqueContractsJson) {
+            HSSFRow dataRow = sheet.createRow(dataRowIndex++);
             dataRow.createCell(0).setCellValue(contract.getId());
             dataRow.createCell(1).setCellValue(contract.getPhone());
             dataRow.createCell(2).setCellValue(contract.getPassportSeries());
@@ -135,11 +127,10 @@ public class ContractServiceImpl implements ContractService {
             HSSFCell dateEndCell = dataRow.createCell(5);
             dateEndCell.setCellValue(contract.getDateEnd());
             dateEndCell.setCellStyle(dateStyle);
-            dataRowIndex++;
         }
 
-        dataRowIndex = 3;
-        for (ContractDB contractDB : uniqueFromDatabase(contracts)) {
+        dataRowIndex = 4;
+        for (ContractDB contractDB : uniqueContractsDB) {
             HSSFRow dataRow = sheet.getRow(dataRowIndex);
             if (dataRow == null) {
                 dataRow = sheet.createRow(dataRowIndex);
@@ -155,6 +146,11 @@ public class ContractServiceImpl implements ContractService {
             dateEndCellDB.setCellValue(contractDB.getDateEnd());
             dateEndCellDB.setCellStyle(dateStyle);
             dataRowIndex++;
+        }
+
+        for (int i = 0; i < headers.length; i++) {
+            sheet.autoSizeColumn(i);
+            sheet.autoSizeColumn(i + 7);
         }
 
         ServletOutputStream ops = res.getOutputStream();

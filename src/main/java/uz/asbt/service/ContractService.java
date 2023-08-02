@@ -16,4 +16,5 @@ public interface ContractService {
      List<ContractDB> uniqueFromDatabase(List<Contract> contracts);
      Response compareData(List<Contract> contracts) ;
      void excel(HttpServletResponse res, List<Contract> contracts) throws Exception;
+
 }
