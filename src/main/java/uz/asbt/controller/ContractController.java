@@ -73,6 +73,7 @@ public class ContractController {
 
     @PostMapping("/parse-contracts")
     public List<Contract> parseContracts(@RequestBody String jsonData) {
+        log.info("LogInfo: {}", jsonData);
         return contractService.parseContracts(jsonData);
     }
 
