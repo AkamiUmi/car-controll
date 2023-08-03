@@ -1,5 +1,6 @@
 package uz.asbt.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.poi.hssf.usermodel.HSSFCell;
 import org.apache.poi.hssf.usermodel.HSSFRow;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
@@ -14,7 +15,11 @@ import uz.asbt.repository.ContractRepository;
 
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -159,4 +164,31 @@ public class ContractServiceImpl implements ContractService {
         ops.close();
     }
 
+    @Override
+    public List<Contract> parseContracts(String jsonRequest) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        List<Contract> contracts = new ArrayList<>();
+        try {
+            String textValue = objectMapper.readTree(jsonRequest).get("TEXT").asText();
+            String[] contractStrings = textValue.split("\n");
+
+            for (String contractString : contractStrings) {
+                String[] contractData = contractString.split(" ");
+                if (contractData.length == 6) {
+                    Contract contract = new Contract();
+                    contract.setId(contractData[0]);
+                    contract.setPhone(contractData[1]);
+                    contract.setPlateNumber(contractData[2]);
+                    contract.setPassportSeries(contractData[3]);
+                    contract.setDateBegin(LocalDate.parse(contractData[4], DateTimeFormatter.ofPattern("dd.MM.yyyy")));
+                    contract.setDateEnd(LocalDate.parse(contractData[5], DateTimeFormatter.ofPattern("dd.MM.yyyy")));
+                    contracts.add(contract);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+            return contracts;
+    }
 }

@@ -71,5 +71,10 @@ public class ContractController {
         contractService.excel(res, contracts);
     }
 
+    @PostMapping("/parse-contracts")
+    public List<Contract> parseContracts(@RequestBody String jsonData) {
+        return contractService.parseContracts(jsonData);
+    }
+
 
 }
