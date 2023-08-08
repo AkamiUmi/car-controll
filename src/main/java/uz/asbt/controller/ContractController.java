@@ -9,6 +9,11 @@ import uz.asbt.model.Response;
 import uz.asbt.service.ContractService;
 
 import javax.servlet.http.HttpServletResponse;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.temporal.TemporalAdjusters;
+import java.util.Date;
 import java.util.List;
 
 @RestController
@@ -75,6 +80,36 @@ public class ContractController {
     public List<Contract> parseContracts(@RequestBody String jsonData) {
         log.info("LogInfo: {}", jsonData);
         return contractService.parseContracts(jsonData);
+    }
+
+    @PostMapping("/test")
+    public void test(@RequestBody String date) {
+        try {
+
+            SimpleDateFormat format = new SimpleDateFormat("dd.MM.yyyy");
+
+            log.info("Date: {}", date);
+            LocalDate currentDate = LocalDate.now();
+            LocalDate lastDayOfMonthDate = currentDate.with(TemporalAdjusters.lastDayOfMonth());
+            LocalDate firstDayOfNextMonth = currentDate.with(TemporalAdjusters.firstDayOfNextMonth());
+            LocalDate firstDayOfCurrentMonth = currentDate.with(TemporalAdjusters.firstDayOfMonth());
+
+            log.info("FirstDayOfNextMonth: {}", firstDayOfNextMonth);
+
+            Date parseDate = format.parse(date);
+            LocalDate cardExpiry = parseDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+            LocalDate nextMonth = currentDate.plusMonths(1);
+            if (cardExpiry.isBefore(lastDayOfMonthDate)) {
+                //if (!cardExpiry.isEqual(lastDayOfMonthDate))
+                    log.info("DATE {} EXPIRED", parseDate.toString());
+            }
+            if (cardExpiry.isBefore(firstDayOfNextMonth.withDayOfMonth(1)) && cardExpiry.isBefore(currentDate)) {
+
+                    log.info("DATE {} EXPIRED2", parseDate.toString());
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
     }
 
 
