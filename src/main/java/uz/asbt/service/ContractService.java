@@ -12,9 +12,12 @@ public interface ContractService {
      List<ContractDB> getAllContracts();
      ContractDB getContractById(long id);
      Long compareContractsEntry(List<Contract> contracts);
+     Long compareContractsEntryByPhone(List<Contract> contracts);
      List<Contract> uniqueFromJson(List<Contract> contracts);
+     List<Contract> uniqueFromJsonByPhone(List<Contract> contracts);
      List<ContractDB> uniqueFromDatabase(List<Contract> contracts);
-     Response compareData(List<Contract> contracts) ;
+     List<ContractDB> uniqueFromPhone(List<Contract> contracts);
+     Response compareData(List<Contract> contracts, boolean onlyByPhone);
      void excel(HttpServletResponse res, List<Contract> contracts) throws Exception;
      List<Contract> parseContracts(String jsonData);
 }

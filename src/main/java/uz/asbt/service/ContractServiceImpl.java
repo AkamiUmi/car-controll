@@ -15,12 +15,9 @@ import uz.asbt.repository.ContractRepository;
 
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -44,7 +41,7 @@ public class ContractServiceImpl implements ContractService {
 
     @Override
     public ContractDB getContractById(long id) {
-        return contractRepository.getReferenceById(id);
+        return contractRepository.findById(id).orElse(null);
     }
 
     @Override
@@ -57,6 +54,25 @@ public class ContractServiceImpl implements ContractService {
         List<ContractDB> contain = contractRepository.findContractsEntrySize(keys);
         return (long) contain.size();
     }
+    @Override
+    public Long compareContractsEntryByPhone(List<Contract> contracts) {
+        Set<String> uniquePhoneNumbers = contracts.stream()
+                .map(Contract::getPhone)
+                .collect(Collectors.toSet());
+
+        long count = 0;
+        for (String phoneNumber : uniquePhoneNumbers) {
+            long countInRequest = contracts.stream()
+                    .filter(contract -> contract.getPhone().equals(phoneNumber))
+                    .count();
+
+            long countInDatabase = contractRepository.countByPhoneIn(Collections.singletonList(phoneNumber));
+            long minCount = Math.min(countInRequest, countInDatabase);
+            count += minCount;
+        }
+
+        return count;
+    }
 
     @Override
     public List<ContractDB> uniqueFromDatabase(List<Contract> contracts) {
@@ -68,6 +84,27 @@ public class ContractServiceImpl implements ContractService {
     }
 
     @Override
+    public List<ContractDB> uniqueFromPhone(List<Contract> contracts) {
+        List<String> phoneNumbers = contracts.stream()
+                .map(Contract::getPhone)
+                .collect(Collectors.toList());
+        List<ContractDB> contractsNotInRequest = contractRepository.findContractsNotInPhone(phoneNumbers);
+        Map<String, Long> phoneCountsInRequest = contracts.stream()
+                .collect(Collectors.groupingBy(Contract::getPhone, Collectors.counting()));
+        List<ContractDB> contractsInResponse = new ArrayList<>(contractsNotInRequest);
+        for (String phoneNumber : phoneCountsInRequest.keySet()) {
+            long countInRequest = phoneCountsInRequest.get(phoneNumber);
+            long countInDatabase = contractRepository.countByPhoneIn(Collections.singletonList(phoneNumber));
+            if (countInDatabase > countInRequest) {
+                List<ContractDB> additionalContracts = contractRepository.findByPhoneIn(Collections.singletonList(phoneNumber));
+                int recordsToAdd = Math.min(additionalContracts.size(), (int) countInRequest);
+                contractsInResponse.addAll(additionalContracts.subList(0, recordsToAdd));
+            }
+        }
+        return contractsInResponse;
+    }
+
+    @Override
     public List<Contract> uniqueFromJson(List<Contract> contracts) {
         return contracts
                 .stream()
@@ -76,11 +113,45 @@ public class ContractServiceImpl implements ContractService {
     }
 
     @Override
-    public Response compareData(List<Contract> contracts) {
+    public List<Contract> uniqueFromJsonByPhone(List<Contract> contracts) {
+        Set<String> uniquePhoneNumbers = contracts.stream()
+                .map(Contract::getPhone)
+                .collect(Collectors.toSet());
+        List<Contract> remainingRecords = new ArrayList<>();
+        for (String phone : uniquePhoneNumbers) {
+            List<Contract> contractsWithPhone = contracts.stream()
+                    .filter(contract -> contract.getPhone().equals(phone))
+                    .collect(Collectors.toList());
+            long countInRequest = contractsWithPhone.size();
+            long countInDatabase = contractRepository.countByPhoneIn(Collections.singletonList(phone));
+
+
+
+            if (countInDatabase == 0) {
+                remainingRecords.addAll(contractsWithPhone);
+            } else {
+                if (countInRequest > countInDatabase) {
+                    remainingRecords.addAll(contractsWithPhone.subList((int) countInDatabase, (int) countInRequest));
+                }
+            }
+        }
+
+        return remainingRecords;
+    }
+
+    @Override
+    public Response compareData(List<Contract> contracts, boolean onlyByPhone) {
         Response response = new Response();
-        response.setContractsInDB(uniqueFromDatabase(contracts));
-        response.setContractsInJson(uniqueFromJson(contracts));
-        response.setCount(compareContractsEntry(contracts));
+        if (onlyByPhone) {
+            response.setContractsInDB(uniqueFromPhone(contracts));
+            response.setContractsInJson(uniqueFromJsonByPhone(contracts));
+            response.setCount(compareContractsEntryByPhone(contracts));
+        } else {
+            response.setContractsInDB(uniqueFromDatabase(contracts));
+            response.setContractsInJson(uniqueFromJson(contracts));
+            response.setCount(compareContractsEntry(contracts));
+        }
+
         return response;
     }
 

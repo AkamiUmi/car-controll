@@ -1,5 +1,6 @@
 package uz.asbt.controller;
 
+import io.swagger.annotations.Api;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,6 +15,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/contracts")
 @Slf4j
+@Api(value = "Test")
 public class ContractController {
 
     private final ContractService contractService;
@@ -56,9 +58,10 @@ public class ContractController {
 
 
     @PostMapping("/compare")
-    public ResponseEntity<Response> compareData(@RequestBody List<Contract> contracts) {
+    public ResponseEntity<Response> compareData(@RequestBody List<Contract> contracts,
+                                                @RequestParam(defaultValue = "false") boolean onlyByPhone) {
         log.info("LogInfo: {}", contracts.toString());
-        return ResponseEntity.ok(contractService.compareData(contracts));
+        return ResponseEntity.ok(contractService.compareData(contracts, onlyByPhone));
     }
 
     @PostMapping("excel")
