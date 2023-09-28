@@ -76,7 +76,7 @@ public class ContractServiceImpl implements ContractService {
 
     @Override
     public List<ContractDB> uniqueFromDatabase(List<Contract> contracts) {
-        var keys = contracts
+        List<String> keys = contracts
                 .stream()
                 .map(contract -> contract.getPhone() + contract.getPassportSeries() + contract.getPlateNumber())
                 .collect(Collectors.toList());
