@@ -2,6 +2,7 @@ package uz.asbt.controller;
 
 import io.swagger.annotations.Api;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import uz.asbt.model.Contract;
@@ -112,6 +113,16 @@ public class ContractController {
             }
         } catch (Exception ex) {
             ex.printStackTrace();
+        }
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getContractById(@PathVariable long id) {
+        ContractDB contract = contractService.getContractById(id);
+        if (contract != null) {
+            return ResponseEntity.ok(contract);
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Contract not found with ID: " + id);
         }
     }
 
