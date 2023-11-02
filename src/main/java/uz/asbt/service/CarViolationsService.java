@@ -2,6 +2,7 @@ package uz.asbt.service;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -12,6 +13,7 @@ import uz.asbt.model.CarViolationsResponse;
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 @Service
 public class CarViolationsService {
     private final String baseUrl = "http://192.168.0.73/";
@@ -30,9 +32,9 @@ public class CarViolationsService {
             StringBuilder urlBuilder = new StringBuilder(baseUrl);
             urlBuilder.append(carNumber).append("/").append(techPassport).append("/");
             String finalUrl = urlBuilder.toString();
-
+            log.info("Request URL: {}", finalUrl);
             String response = restTemplate.getForObject(finalUrl, String.class);
-
+            log.info("Response: {}", response);
             if (responseContainsViolations(response)) {
                 carsWithViolations.add(car);
             }
@@ -52,10 +54,5 @@ public class CarViolationsService {
             return false;
         }
     }
-
-
-
-
-
 
 }

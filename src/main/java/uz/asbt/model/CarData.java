@@ -10,4 +10,12 @@ import java.util.List;
 
 public class CarData {
     private List<CarInfo> cars;
+
+
+    @Override
+    public String toString() {
+        return "CarData{" +
+                "cars=" + cars +
+                '}';
+    }
 }

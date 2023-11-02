@@ -8,4 +8,13 @@ import lombok.Setter;
 public class CarInfo {
     private String carNumber;
     private String techPassport;
+
+
+    @Override
+    public String toString() {
+        return "CarInfo{" +
+                "carNumber='" + carNumber + '\'' +
+                ", techPassport='" + techPassport + '\'' +
+                '}';
+    }
 }
